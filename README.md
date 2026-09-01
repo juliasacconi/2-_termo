@@ -1,8 +1,5 @@
-Claro — você quer o conteúdo em um bloco de código, para aparecer com o botão de copiar, igual ao GitHub. Aqui está:
 
 # 💻 2º TERMO
-
-## Atividades de Programação
 
 ### Julia Sacconi
 
