@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hello Kitty e Seus Amigos: Corrida na Cidade</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111827;
+            color: #1d3557;
+            font-family: 'Fredoka', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 12px;
+            background: linear-gradient(180deg, #ff4b5c 0%, #d62828 100%);
+            border: 4px solid #ffffff;
+            border-radius: 20px;
+            padding: 8px 35px;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            font-size: 2em;
+            color: #ffffff;
+            margin: 0;
+            text-shadow: 2px 2px 0 #1d3557;
+            letter-spacing: 1px;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            border: 6px solid #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.5);
+            overflow: hidden;
+            background-color: #8ecae6;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        #score-board {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            padding: 8px 20px;
+            font-size: 1.2em;
+            background: rgba(255, 255, 255, 0.95);
+            border: 3px solid #1d3557;
+            border-radius: 15px;
+            display: flex;
+            gap: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            color: #1d3557;
+            font-weight: bold;
+        }
+
+        #score-board span { color: #ff4b5c; }
+        #best-score span { color: #2a9d8f; }
+
+        #start-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(241, 250, 238, 0.92);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            backdrop-filter: blur(5px);
+        }
+
+        #game-title {
+            font-size: 2.5em;
+            color: #ff4b5c;
+            text-shadow: 3px 3px 0 #ffffff, 5px 5px 0 #1d3557;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        #game-over-text {
+            color: #ff4b5c;
+            font-size: 3em;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 0 #ffffff, 5px 5px 0 #1d3557;
+            display: none;
+            font-weight: 700;
+        }
+
+        #start-btn {
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            background: linear-gradient(180deg, #ffb703 0%, #fb8500 100%);
+            color: #ffffff;
+            border: 4px solid #ffffff;
+            padding: 14px 45px;
+            font-size: 1.8em;
+            cursor: pointer;
+            border-radius: 20px;
+            box-shadow: 0 6px 0 #d62828, 0 10px 15px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        #start-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #d62828;
+        }
+
+        #touch-controls {
+            margin-top: 15px;
+            display: flex;
+            gap: 30px;
+            width: 800px;
+            justify-content: center;
+        }
+
+        .touch-btn {
+            background: #ffffff;
+            border: 4px solid #1d3557;
+            border-radius: 18px;
+            color: #1d3557;
+            padding: 12px 35px;
+            font-size: 1.3em;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #1d3557;
+        }
+
+        .touch-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #1d3557;
+        }
+
+        @media (max-width: 850px) {
+            #game-container, #touch-controls {
+                width: 95vw;
+                height: calc(95vw * 0.5);
+            }
+            #touch-controls { height: auto; }
+            #start-btn { font-size: 1.4em; padding: 10px 30px; }
+            h1 { font-size: 1.3em; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>HELLO KITTY E SEUS AMIGOS</h1>
+</header>
+
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    
+    <div id="score-board">
+        <div id="best-score">Recorde: <span>0</span></div>
+        <div id="current-score">Pontos: <span>0</span></div>
+    </div>
+
+    <div id="start-overlay">
+        <div id="game-title">HELLO KITTY & FRIENDS RUN</div>
+        <div id="game-over-text">FIM DE JOGO! 🎈</div>
+        <button id="start-btn">JOGAR AGORA</button>
+    </div>
+</div>
+
+<div id="touch-controls">
+    <div id="jump-btn" class="touch-btn">▲ PULAR (ESPAÇO)</div>
+    <div id="duck-btn" class="touch-btn">▼ AGACHAR (SETA BAIXO)</div>
+</div>
+
+<script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const startOverlay = document.getElementById('start-overlay');
+    const startBtn = document.getElementById('start-btn');
+    const gameOverText = document.getElementById('game-over-text');
+    const gameTitle = document.getElementById('game-title');
+    const currentScoreSpan = document.querySelector('#current-score span');
+    const bestScoreSpan = document.querySelector('#best-score span');
+    const jumpBtn = document.getElementById('jump-btn');
+    const duckBtn = document.getElementById('duck-btn');
+
+    let gameRunning = false;
+    let score = 0;
+    let bestScore = localStorage.getItem('helloKittyFriendsBestScore') || 0;
+    bestScoreSpan.innerText = bestScore;
+    let gameSpeed = 5.5;
+    let frameCount = 0;
+    let bgScroll = 0;
+    let lastObstacleFrame = 0;
+
+    const GROUND_Y = canvas.height - 50;
+    const KITTY_WIDTH = 54;
+    const KITTY_HEIGHT = 64;
+    const GRAVITY = 0.65;
+    const JUMP_FORCE = -12.5;
+
+    let kitty = {
+        x: 70,
+        y: GROUND_Y - KITTY_HEIGHT,
+        width: KITTY_WIDTH,
+        height: KITTY_HEIGHT,
+        baseHeight: KITTY_HEIGHT,
+        duckHeight: 28, // Reduzido para garantir facilidade ao desviar por baixo
+        dy: 0,
+        isJumping: false,
+        isDucking: false
+    };
+
+    let obstacles = [];
+
+    // Fundo do desenho animado (com Paralaxe e Profundidade)
+    function drawDetailedBackground() {
+        let skyGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        skyGrad.addColorStop(0, '#52b788');
+        skyGrad.addColorStop(0, '#74c69d');
+        skyGrad.addColorStop(0, '#4ea8de');
+        skyGrad.addColorStop(0.7, '#90e0ef');
+        skyGrad.addColorStop(1, '#e0f7fa');
+        ctx.fillStyle = skyGrad;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Sol Radiante
+        ctx.fillStyle = '#ffb703';
+        ctx.beginPath(); ctx.arc(720, 55, 32, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(255, 214, 10, 0.35)';
+        ctx.beginPath(); ctx.arc(720, 55, 46, 0, Math.PI * 2); ctx.fill();
+
+        // Nuvens Animadas
+        ctx.fillStyle = '#ffffff';
+        drawCloud((100 - bgScroll * 0.15) % (canvas.width + 200) - 100, 45, 28);
+        drawCloud((420 - bgScroll * 0.15) % (canvas.width + 200) - 100, 75, 36);
+        drawCloud((750 - bgScroll * 0.15) % (canvas.width + 200) - 100, 35, 26);
+
+        // Colinas ao Fundo
+        ctx.fillStyle = '#74c69d';
+        ctx.beginPath();
+        ctx.ellipse(180 - (bgScroll * 0.25) % 800, GROUND_Y, 220, 90, 0, Math.PI, 0);
+        ctx.ellipse(680 - (bgScroll * 0.25) % 800, GROUND_Y, 260, 110, 0, Math.PI, 0);
+        ctx.fill();
+
+        // Casas da Sanrio e Árvores
+        let offset = (bgScroll * 0.5) % 1200;
+        drawSanrioHouse(220 - offset, GROUND_Y);
+        drawSanrioHouse(1220 - offset, GROUND_Y);
+        drawTree(580 - offset, GROUND_Y);
+        drawTree(1580 - offset, GROUND_Y);
+
+        // Chão e Gramado
+        ctx.fillStyle = '#52b788';
+        ctx.fillRect(0, GROUND_Y, canvas.width, 50);
+        ctx.fillStyle = '#2d6a4f';
+        ctx.fillRect(0, GROUND_Y, canvas.width, 6);
+
+        // Flores Coloridas no Caminho
+        for (let x = 0; x < canvas.width; x += 90) {
+            let flowerX = (x - bgScroll) % canvas.width;
+            if (flowerX < 0) flowerX += canvas.width;
+            drawFlower(flowerX, GROUND_Y + 22, (x / 90) % 3);
+        }
+    }
+
+    function drawCloud(x, y, r) {
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.arc(x + r * 0.6, y - r * 0.2, r * 0.7, 0, Math.PI * 2);
+        ctx.arc(x + r * 1.2, y, r * 0.8, 0, Math.PI * 2);
+        ctx.arc(x - r * 0.6, y, r * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function drawFlower(x, y, colorType) {
+        let colors = ['#ff4b5c', '#ffb703', '#4ea8de'];
+        ctx.fillStyle = colors[Math.floor(colorType)];
+        for (let i = 0; i < 5; i++) {
+            let angle = (i * 2 * Math.PI) / 5;
+            ctx.beginPath();
+            ctx.arc(x + Math.cos(angle) * 5, y + Math.sin(angle) * 5, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawTree(x, y) {
+        if (x < -100 || x > canvas.width + 100) return;
+        ctx.fillStyle = '#8d5b4c';
+        ctx.fillRect(x - 9, y - 65, 18, 65);
+        ctx.fillStyle = '#40916c';
+        ctx.beginPath(); ctx.arc(x, y - 80, 32, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#52b788';
+        ctx.beginPath(); ctx.arc(x - 8, y - 88, 14, 0, Math.PI * 2); ctx.fill();
+    }
+
+    function drawSanrioHouse(x, y) {
+        if (x < -150 || x > canvas.width + 150) return;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x - 38, y - 70, 76, 70);
+        ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2.5;
+        ctx.strokeRect(x - 38, y - 70, 76, 70);
+
+        ctx.fillStyle = '#ff4b5c';
+        ctx.beginPath();
+        ctx.moveTo(x - 46, y - 70);
+        ctx.lineTo(x, y - 108);
+        ctx.lineTo(x + 46, y - 70);
+        ctx.closePath();
+        ctx.fill(); ctx.stroke();
+
+        ctx.fillStyle = '#ffb703';
+        ctx.fillRect(x - 10, y - 38, 20, 38); ctx.strokeRect(x - 10, y - 38, 20, 38);
+
+        ctx.fillStyle = '#a8dadc';
+        ctx.beginPath(); ctx.arc(x - 22, y - 48, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x + 22, y - 48, 8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+
+    // Desenho de Alta Qualidade da Hello Kitty
+    function drawHelloKitty(hk) {
+        ctx.save();
+        ctx.translate(hk.x, hk.y);
+
+        if (hk.isDucking) {
+            // Pose de Agachamento Refinada
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(27, 16, 25, 12, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2.2; ctx.stroke();
+
+            // Orelhas
+            ctx.beginPath(); ctx.moveTo(10, 7); ctx.lineTo(4, -2); ctx.lineTo(17, 3); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(37, 3); ctx.lineTo(50, -2); ctx.lineTo(44, 7); ctx.fill(); ctx.stroke();
+
+            // Laço
+            drawRedRibbon(11, 1, 0.8);
+
+            // Olhos e Nariz
+            ctx.fillStyle = '#1d3557';
+            ctx.beginPath(); ctx.ellipse(20, 16, 2.2, 3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(34, 16, 2.2, 3, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath(); ctx.ellipse(27, 19, 2.8, 1.8, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Bigodes
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 1.6;
+            ctx.beginPath(); ctx.moveTo(8, 14); ctx.lineTo(0, 12); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(8, 18); ctx.lineTo(0, 18); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(46, 14); ctx.lineTo(54, 12); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(46, 18); ctx.lineTo(54, 18); ctx.stroke();
+
+            // Macacão Agachado
+            ctx.fillStyle = '#1d3557';
+            ctx.fillRect(8, 22, 38, 6);
+        } else {
+            // Hello Kitty em Pé / Correndo
+            // Camisola Amarela
+            ctx.fillStyle = '#ffb703';
+            ctx.fillRect(14, 34, 26, 8);
+            
+            // Macacão Azul Escuro
+            ctx.fillStyle = '#1d3557';
+            ctx.beginPath();
+            ctx.moveTo(14, 38);
+            ctx.lineTo(40, 38);
+            ctx.lineTo(44, 52);
+            ctx.lineTo(10, 52);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2.2; ctx.stroke();
+
+            // Botões Amarelos
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath(); ctx.arc(18, 42, 2.2, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(36, 42, 2.2, 0, Math.PI*2); ctx.fill();
+
+            // Cabeça Redondinha
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.ellipse(27, 20, 25, 18, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+
+            // Orelhas
+            ctx.beginPath(); ctx.moveTo(9, 8); ctx.lineTo(3, -4); ctx.lineTo(17, 4); ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(37, 4); ctx.lineTo(51, -4); ctx.lineTo(45, 8); ctx.closePath(); ctx.fill(); ctx.stroke();
+
+            // Laço com Sombra e Brilho
+            drawRedRibbon(12, 2, 1);
+
+            // Olhos Pretos Vivos
+            ctx.fillStyle = '#1d3557';
+            ctx.beginPath(); ctx.ellipse(17, 20, 2.6, 4, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.ellipse(37, 20, 2.6, 4, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Nariz Amarelo
+            ctx.fillStyle = '#ffb703';
+            ctx.beginPath(); ctx.ellipse(27, 23, 3.2, 2.2, 0, 0, Math.PI * 2); ctx.fill();
+
+            // Bigodes Três de Cada Lado
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 1.8;
+            ctx.beginPath(); ctx.moveTo(5, 17); ctx.lineTo(-3, 14); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(4, 21); ctx.lineTo(-4, 21); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(5, 25); ctx.lineTo(-3, 28); ctx.stroke();
+
+            ctx.beginPath(); ctx.moveTo(49, 17); ctx.lineTo(57, 14); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(50, 21); ctx.lineTo(58, 21); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(49, 25); ctx.lineTo(57, 28); ctx.stroke();
+
+            // Braços Brancos
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath(); ctx.arc(9, 41, 4.5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+            ctx.beginPath(); ctx.arc(45, 41, 4.5, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+
+            // Pés / Animação de Passos
+            let legOffset = hk.isJumping ? 0 : Math.sin(frameCount * 0.45) * 6;
+            ctx.fillRect(14 + legOffset, 52, 9, 10); ctx.strokeRect(14 + legOffset, 52, 9, 10);
+            ctx.fillRect(31 - legOffset, 52, 9, 10); ctx.strokeRect(31 - legOffset, 52, 9, 10);
+        }
+
+        ctx.restore();
+    }
+
+    function drawRedRibbon(x, y, scale) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#ff4b5c';
+        ctx.strokeStyle = '#1d3557';
+        ctx.lineWidth = 2.2;
+
+        ctx.beginPath(); ctx.ellipse(-10, 0, 10, 7.5, 0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(10, 0, 10, 7.5, -0.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ff6b6b';
+        ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+
+    // Desenho dos Obstáculos
+    function drawObstacle(obs) {
+        ctx.save();
+        ctx.translate(obs.x, obs.y);
+
+        if (obs.type === 'apple') {
+            // Maçã no Chão
+            ctx.fillStyle = '#ff4b5c';
+            ctx.beginPath(); ctx.arc(16, 18, 14, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#8d5b4c'; ctx.fillRect(15, 1, 3, 6);
+            ctx.fillStyle = '#52b788'; ctx.beginPath(); ctx.ellipse(20, 3, 5, 2.5, 0.4, 0, Math.PI*2); ctx.fill();
+        } else if (obs.type === 'gift') {
+            // Caixa de Presente
+            ctx.fillStyle = '#ffb703';
+            ctx.fillRect(2, 6, 28, 28);
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2; ctx.strokeRect(2, 6, 28, 28);
+            ctx.fillStyle = '#ff4b5c';
+            ctx.fillRect(13, 6, 6, 28);
+            ctx.fillRect(2, 17, 28, 6);
+            drawRedRibbon(16, 4, 0.55);
+        } else if (obs.type === 'balloon') {
+            // Balão Flutuante (Alta Altitude para dar margem ao agachar)
+            ctx.fillStyle = '#4ea8de';
+            ctx.beginPath(); ctx.ellipse(16, 15, 13, 16, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.strokeStyle = '#1d3557'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(16, 31); ctx.lineTo(16, 55); ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+    // Áudio do Jogo
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain); gain.connect(audioCtx.destination);
+
+        if (type === 'jump') {
+            osc.frequency.setValueAtTime(380, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(820, audioCtx.currentTime + 0.12);
+            gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.12);
+        } else if (type === 'over') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(240, audioCtx.currentTime);
+            osc.frequency.linearRampToValueAtTime(90, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+        }
+    }
+
+    function jump() {
+        if (gameRunning && !kitty.isJumping && !kitty.isDucking) {
+            kitty.dy = JUMP_FORCE;
+            kitty.isJumping = true;
+            playSound('jump');
+        }
+    }
+
+    function duck(state) {
+        if (!gameRunning || kitty.isJumping) return;
+        kitty.isDucking = state;
+        kitty.height = state ? kitty.duckHeight : kitty.baseHeight;
+        kitty.y = GROUND_Y - kitty.height;
+    }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.code === 'Space' || e.code === 'ArrowUp') {
+            e.preventDefault();
+            if (!gameRunning) startGame();
+            else jump();
+        }
+        if (e.code === 'ArrowDown') {
+            e.preventDefault();
+            duck(true);
+        }
+    });
+
+    window.addEventListener('keyup', (e) => {
+        if (e.code === 'ArrowDown') duck(false);
+    });
+
+    jumpBtn.addEventListener('click', jump);
+    duckBtn.addEventListener('mousedown', () => duck(true));
+    duckBtn.addEventListener('mouseup', () => duck(false));
+    duckBtn.addEventListener('touchstart', (e) => { e.preventDefault(); duck(true); });
+    duckBtn.addEventListener('touchend', (e) => { e.preventDefault(); duck(false); });
+
+    function spawnObstacle() {
+        // Distância mínima garantida entre obstáculos para não ficar impossível
+        if (frameCount - lastObstacleFrame < 70) return;
+
+        let rand = Math.random();
+        let type = rand < 0.4 ? 'apple' : (rand < 0.7 ? 'gift' : 'balloon');
+        
+        let obs = {
+            x: canvas.width,
+            type: type,
+            width: 32,
+            height: type === 'balloon' ? 55 : 34,
+            // Balão posicionado alto o suficiente para passar facilmente agachado
+            y: type === 'balloon' ? GROUND_Y - 95 : GROUND_Y - 34
+        };
+
+        obstacles.push(obs);
+        lastObstacleFrame = frameCount;
+    }
+
+    function startGame() {
+        score = 0;
+        gameSpeed = 5.5;
+        obstacles = [];
+        frameCount = 0;
+        lastObstacleFrame = 0;
+        gameRunning = true;
+        kitty.y = GROUND_Y - kitty.baseHeight;
+        kitty.dy = 0;
+        kitty.isJumping = false;
+        kitty.isDucking = false;
+        kitty.height = kitty.baseHeight;
+        
+        currentScoreSpan.innerText = score;
+        startOverlay.style.display = 'none';
+        gameLoop();
+    }
+
+    function triggerGameOver() {
+        gameRunning = false;
+        playSound('over');
+        if (score > bestScore) {
+            bestScore = score;
+            localStorage.setItem('helloKittyFriendsBestScore', bestScore);
+            bestScoreSpan.innerText = bestScore;
+        }
+        gameTitle.style.display = 'none';
+        gameOverText.style.display = 'block';
+        startBtn.innerText = 'JOGAR NOVAMENTE 🎈';
+        startOverlay.style.display = 'flex';
+    }
+
+    function gameLoop() {
+        if (!gameRunning) return;
+        frameCount++;
+        bgScroll += gameSpeed * 0.4;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        drawDetailedBackground();
+
+        if (kitty.isJumping) {
+            kitty.dy += GRAVITY;
+            kitty.y += kitty.dy;
+            if (kitty.y >= GROUND_Y - kitty.height) {
+                kitty.y = GROUND_Y - kitty.height;
+                kitty.isJumping = false;
+                kitty.dy = 0;
+            }
+        }
+
+        drawHelloKitty(kitty);
+
+        // Frequência de obstáculos equilibrada
+        if (Math.random() < 0.025) {
+            spawnObstacle();
+        }
+
+        for (let i = obstacles.length - 1; i >= 0; i--) {
+            let obs = obstacles[i];
+            obs.x -= gameSpeed;
+            drawObstacle(obs);
+
+            // Caixas de colisão (hitboxes) reduzidas em 15% para jogabilidade mais tolerante e justa
+            let marginX = 6;
+            let marginY = 4;
+
+            if (
+                kitty.x + marginX < obs.x + obs.width - marginX &&
+                kitty.x + kitty.width - marginX > obs.x + marginX &&
+                kitty.y + marginY < obs.y + obs.height - marginY &&
+                kitty.y + kitty.height - marginY > obs.y + marginY
+            ) {
+                triggerGameOver();
+                return;
+            }
+
+            if (obs.x + obs.width < 0) {
+                obstacles.splice(i, 1);
+                score++;
+                currentScoreSpan.innerText = score;
+                if (score % 8 === 0 && gameSpeed < 11) gameSpeed += 0.35;
+            }
+        }
+
+        requestAnimationFrame(gameLoop);
+    }
+
+    startBtn.addEventListener('click', startGame);
+    drawDetailedBackground();
+</script>
+</body>
+</html>
