@@ -1,0 +1,25 @@
+const fs = require('fs');
+const entrada = require('readline-sync');
+
+console.log("=== INSPEÇÃO DE QUALIDADE ===");
+
+const amostrasColetadas = entrada.question("Digite as amostras coletadas separadas por virgula: (4) ").split(',').map(Number);
+
+let aprovado = true;
+for (let i = 0; i < amostrasColetadas.length; i++) {
+if (amostrasColetadas[i] < 12.0) {
+aprovado = false;
+break;
+}
+}
+const relatorioInspecao = {
+data: "2026-09-23",
+inspetor: "Julia Sacconi",
+amostras: amostrasColetadas,
+loteAprovado: aprovado
+};
+fs.writeFileSync('inspecao_qualidade2.json', JSON.stringify(relatorioInspecao, null, 2));
+console.log("\n=== RELATÓRIO DE QUALIDADE GERADO ===");
+console.log(`\nAmostras Coletadas: ${amostrasColetadas.join(', ')}`);
+console.log(`\nStatus do Lote: ${aprovado ? "APROVADO" : "REPROVADO"}`);
+console.log("\nArquivo 'inspecao_qualidade.json' gravado em disco.");
