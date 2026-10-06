@@ -261,15 +261,18 @@ HAVING COUNT(*) > 5;
 
 
 -- EX 18; RESUMO E ORDEM DE UMA CONSULTA COMPLETA
-SELECT colunas
-FROM tabela
-WHERE condicao
-GROUP BY colunas_agrupar
-HAVING condicao_agrupar
-ORDER BY colunas
-LIMIT quantidade;
 
-SELECT nome, cidade, COUNT(*) AS quantidade_clientes
+-- SELECT colunas
+-- FROM tabela
+-- WHERE condicao
+-- GROUP BY colunas_agrupar
+-- HAVING condicao_agrupar
+-- ORDER BY colunas
+--LIMIT quantidade;
+-- EXEMPLO DE CONSULTA COMPLETA
+
+
+SELECT cidade, COUNT(*) AS quantidade_clientes
 FROM cliente
 WHERE cidade = 'limeira'
 GROUP BY cidade  
